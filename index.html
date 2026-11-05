@@ -1,0 +1,1632 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Quiz de repaso - Laboratorio</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Atkinson+Hyperlegible:ital,wght@0,400;0,700;1,400;1,700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --bg: #0C151D;
+    --paper: #EBE7E0;
+    --paper-edge: #BDB8AD;
+    --ink: #0C151D;
+    --muted-text: #28455D;
+    --accent: #44749D;
+    --accent-deep: #28455D;
+    --correct: #56CBF9;
+    --correct-bg: #DCF3FC;
+    --correct-icon: #0C151D;
+    --incorrect: #A3452F;
+    --incorrect-bg: #F1DDD3;
+    --title-color: #C6D4E1;
+  }
+
+  * { box-sizing: border-box; }
+
+  html, body {
+    margin: 0;
+    padding: 0;
+    min-height: 100%;
+    background: var(--bg);
+    background-image:
+      radial-gradient(ellipse at top left, rgba(255,255,255,0.05), transparent 55%),
+      radial-gradient(ellipse at bottom right, rgba(0,0,0,0.25), transparent 60%);
+    font-family: 'Atkinson Hyperlegible', sans-serif;
+    color: var(--ink);
+    display: flex;
+    justify-content: center;
+    padding: 40px 16px 60px;
+  }
+
+  .app { width: 100%; max-width: 640px; }
+
+  .app-header { text-align: center; margin-bottom: 26px; }
+  .app-header .eyebrow {
+    font-family: 'Atkinson Hyperlegible', sans-serif;
+    font-size: 11px;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: rgba(241,236,221,0.55);
+  }
+  .app-header h1 {
+    font-family: 'Atkinson Hyperlegible', sans-serif;
+    font-weight: 600;
+    font-size: 28px;
+    color: var(--title-color);
+    margin: 6px 0 0;
+  }
+
+  .progress-track {
+    display: flex;
+    gap: 7px;
+    justify-content: center;
+    margin: 18px 0 28px;
+    min-height: 9px;
+  }
+  .drop {
+    width: 9px; height: 9px;
+    border-radius: 50% 50% 50% 0;
+    transform: rotate(45deg);
+    background: rgba(241,236,221,0.18);
+  }
+  .drop.filled { background: var(--accent); }
+  .drop.current { background: var(--paper); }
+
+  .card {
+    position: relative;
+    background: var(--paper);
+    border-radius: 3px;
+    padding: 34px 32px 28px;
+    box-shadow: 0 18px 40px rgba(0,0,0,0.35), 0 1px 0 rgba(255,255,255,0.4) inset;
+    border: 1px solid var(--paper-edge);
+  }
+
+  /* ---- Menu screen (rack of samples) ---- */
+  .menu-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+  }
+  .menu-item {
+    text-align: left;
+    border: 1.5px solid var(--paper-edge);
+    background: rgba(255,255,255,0.4);
+    border-radius: 3px;
+    padding: 16px 16px 14px;
+    cursor: pointer;
+    transition: border-color 0.15s ease, background 0.15s ease, transform 0.1s ease;
+  }
+  .menu-item:hover { border-color: var(--accent-deep); background: rgba(68,116,157,0.08); }
+  .menu-item:active { transform: scale(0.99); }
+  .menu-item .tag {
+    font-family: 'Atkinson Hyperlegible', sans-serif;
+    font-size: 11px;
+    font-weight: 600;
+    color: var(--accent-deep);
+    letter-spacing: 0.06em;
+  }
+  .menu-item .name {
+    font-family: 'Atkinson Hyperlegible', sans-serif;
+    font-weight: 600;
+    font-size: 16px;
+    margin-top: 4px;
+    line-height: 1.3;
+  }
+  .menu-item .sub {
+    font-size: 12px;
+    color: var(--muted-text);
+    margin-top: 4px;
+  }
+  .menu-intro {
+    font-size: 14px;
+    color: var(--muted-text);
+    text-align: center;
+    margin-bottom: 20px;
+  }
+
+  .sample-tag {
+    position: absolute;
+    top: -13px;
+    left: 28px;
+    background: var(--accent);
+    color: var(--paper);
+    font-family: 'Atkinson Hyperlegible', sans-serif;
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.08em;
+    padding: 5px 11px;
+    border-radius: 2px;
+    box-shadow: 0 3px 8px rgba(0,0,0,0.25);
+  }
+
+  .back-link {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    font-family: 'Atkinson Hyperlegible', sans-serif;
+    font-size: 11.5px;
+    color: var(--muted-text);
+    background: none;
+    border: none;
+    cursor: pointer;
+    padding: 0 0 16px;
+  }
+  .back-link:hover { color: var(--accent-deep); }
+
+  .question-text {
+    font-family: 'Atkinson Hyperlegible', sans-serif;
+    font-size: 20px;
+    line-height: 1.45;
+    font-weight: 600;
+    margin: 10px 0 24px;
+  }
+
+  .question-image {
+    display: block;
+    max-width: 100%;
+    height: auto;
+    border-radius: 3px;
+    border: 1px solid var(--paper-edge);
+    margin: 4px 0 20px;
+  }
+
+  .option-image {
+    display: block;
+    max-width: 160px;
+    max-height: 110px;
+    width: auto;
+    height: auto;
+    object-fit: contain;
+    border-radius: 3px;
+    border: 1px solid var(--paper-edge);
+    background: #FFFFFF;
+    margin-bottom: 8px;
+  }
+
+  .subitems {
+    list-style: lower-roman;
+    padding-left: 22px;
+    margin: -6px 0 22px;
+    font-size: 15px;
+    line-height: 1.6;
+    color: var(--ink);
+  }
+  .subitems li { margin-bottom: 4px; }
+
+  .subq-block {
+    margin: 20px 0 18px;
+    padding-top: 16px;
+    border-top: 1px dashed var(--paper-edge);
+  }
+  .subq-block:first-of-type {
+    border-top: none;
+    padding-top: 0;
+    margin-top: 4px;
+  }
+  .subq-prompt {
+    font-family: 'Atkinson Hyperlegible', sans-serif;
+    font-weight: 700;
+    font-size: 15px;
+    margin-bottom: 10px;
+    color: var(--ink);
+  }
+  .sub-status {
+    font-size: 12.5px;
+    color: var(--muted-text);
+    margin-top: 8px;
+  }
+
+  .options { display: flex; flex-direction: column; gap: 10px; }
+
+  .option {
+    text-align: left;
+    border: 1.5px solid var(--paper-edge);
+    background: rgba(255,255,255,0.35);
+    border-radius: 3px;
+    padding: 13px 16px;
+    font-family: 'Atkinson Hyperlegible', sans-serif;
+    font-size: 15px;
+    color: var(--ink);
+    cursor: pointer;
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
+    transition: border-color 0.15s ease, background 0.15s ease, transform 0.1s ease;
+  }
+  .option:hover:not(.locked) { border-color: var(--accent-deep); background: rgba(68,116,157,0.08); }
+  .option:active:not(.locked) { transform: scale(0.995); }
+
+  .option .letter {
+    font-family: 'Atkinson Hyperlegible', sans-serif;
+    font-size: 12px;
+    font-weight: 600;
+    color: var(--muted-text);
+    border: 1px solid var(--paper-edge);
+    border-radius: 50%;
+    width: 20px; height: 20px;
+    display: flex; align-items: center; justify-content: center;
+    flex-shrink: 0;
+    margin-top: 1px;
+  }
+
+  .option.correct-answer { border-color: var(--correct); background: var(--correct-bg); }
+  .option.correct-answer .letter { background: var(--correct); border-color: var(--correct); color: var(--correct-icon); }
+  .option.incorrect-answer { border-color: var(--incorrect); background: var(--incorrect-bg); }
+  .option.incorrect-answer .letter { background: var(--incorrect); border-color: var(--incorrect); color: white; }
+  .option.locked { cursor: default; }
+  .option.dimmed { opacity: 0.55; }
+
+  .option.selected:not(.locked) { border-color: var(--accent-deep); background: rgba(68,116,157,0.14); }
+  .option.selected:not(.locked) .letter { background: var(--accent-deep); border-color: var(--accent-deep); color: var(--paper); }
+
+  .option.missed { border-color: var(--correct); background: var(--correct-bg); opacity: 0.65; }
+  .option.missed .letter { background: transparent; border-color: var(--correct); color: var(--correct-icon); }
+
+  .confirm-btn {
+    width: 100%;
+    font-family: 'Atkinson Hyperlegible', sans-serif;
+    font-weight: 600;
+    font-size: 14px;
+    color: var(--paper);
+    background: var(--accent-deep);
+    border: none;
+    padding: 12px;
+    border-radius: 3px;
+    cursor: pointer;
+    margin-top: 4px;
+  }
+  .confirm-btn:hover:not(:disabled) { background: var(--accent); }
+  .confirm-btn:disabled { opacity: 0.45; cursor: not-allowed; }
+
+  .explanation {
+    font-size: 13.5px;
+    line-height: 1.5;
+    color: var(--muted-text);
+    margin-top: 6px;
+    padding-top: 6px;
+    border-top: 1px dashed rgba(0,0,0,0.12);
+    display: none;
+  }
+  .option.correct-answer .explanation,
+  .option.incorrect-answer .explanation,
+  .option.missed .explanation { display: block; }
+  .option-body { flex: 1; min-width: 0; }
+
+  .footer-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-top: 26px;
+  }
+
+  .status-note { font-family: 'Atkinson Hyperlegible', sans-serif; font-size: 11.5px; color: var(--muted-text); }
+
+  .next-btn, .menu-btn {
+    font-family: 'Atkinson Hyperlegible', sans-serif;
+    font-weight: 600;
+    font-size: 14px;
+    color: var(--paper);
+    background: var(--accent-deep);
+    border: none;
+    padding: 11px 22px;
+    border-radius: 3px;
+    cursor: pointer;
+    transition: opacity 0.2s ease, background 0.15s ease;
+  }
+  .next-btn { opacity: 0; pointer-events: none; }
+  .next-btn.visible { opacity: 1; pointer-events: auto; }
+  .next-btn:hover, .menu-btn:hover { background: var(--accent); }
+
+  .id-field { margin-bottom: 16px; }
+  .id-field label {
+    display: block;
+    font-family: 'Atkinson Hyperlegible', sans-serif;
+    font-size: 11px;
+    letter-spacing: 0.05em;
+    text-transform: uppercase;
+    color: var(--muted-text);
+    margin-bottom: 6px;
+  }
+  .id-field input, .id-field select {
+    width: 100%;
+    font-family: 'Atkinson Hyperlegible', sans-serif;
+    font-size: 15px;
+    padding: 11px 13px;
+    border: 1.5px solid var(--paper-edge);
+    border-radius: 3px;
+    background: rgba(255,255,255,0.5);
+    color: var(--ink);
+  }
+  .id-field input:focus, .id-field select:focus { outline: none; border-color: var(--accent-deep); }
+  .id-error {
+    font-size: 12px;
+    color: var(--incorrect);
+    margin: -8px 0 14px;
+    display: none;
+  }
+  .id-error.visible { display: block; }
+  .continue-btn {
+    width: 100%;
+    font-family: 'Atkinson Hyperlegible', sans-serif;
+    font-weight: 600;
+    font-size: 15px;
+    color: var(--paper);
+    background: var(--accent-deep);
+    border: none;
+    padding: 13px;
+    border-radius: 3px;
+    cursor: pointer;
+    margin-top: 6px;
+  }
+  .continue-btn:hover { background: var(--accent); }
+
+  .send-btn {
+    font-family: 'Atkinson Hyperlegible', sans-serif;
+    font-weight: 600;
+    font-size: 14px;
+    color: var(--paper);
+    background: var(--accent-deep);
+    border: none;
+    padding: 11px 22px;
+    border-radius: 3px;
+    cursor: pointer;
+  }
+  .send-btn:hover { background: var(--accent); }
+  .send-btn.sent { background: var(--muted-text); cursor: default; }
+  .sent-note {
+    font-size: 12px;
+    color: var(--muted-text);
+    margin-top: 10px;
+  }
+
+  .result-screen { text-align: center; }
+  .result-screen .big {
+    font-family: 'Atkinson Hyperlegible', sans-serif;
+    font-size: 42px;
+    font-weight: 700;
+    color: var(--accent-deep);
+    margin: 4px 0;
+  }
+  .result-screen p { color: var(--muted-text); font-size: 14px; }
+  .result-actions { display: flex; gap: 10px; justify-content: center; margin-top: 18px; }
+  .menu-btn { background: transparent; border: 1.5px solid var(--accent-deep); color: var(--accent-deep); }
+  .menu-btn:hover { background: rgba(68,116,157,0.1); }
+
+  @media (max-width: 480px) {
+    .menu-grid { grid-template-columns: 1fr; }
+  }
+</style>
+</head>
+<body>
+
+<div class="app">
+  <div class="app-header">
+    <div class="eyebrow">Repaso &middot; Laboratorio de Química Inorgánica</div>
+    <h1 id="mainTitle">Antes de empezar</h1>
+  </div>
+
+  <div class="progress-track" id="progressTrack"></div>
+
+  <div class="card" id="card"></div>
+</div>
+
+<script>
+/* =====================================================================
+   PARA AGREGAR/EDITAR PREGUNTAS DE CADA PRÁCTICA:
+   Cada práctica (P1...P6) tiene su propio array "questions" dentro de
+   quizSets. Copiá un bloque { ... } y modificá el texto para agregar
+   una pregunta nueva a esa práctica.
+   - "correct: true" en una o varias opciones.
+   - "explanation" se muestra siempre, sea correcta o no la opción.
+
+   PUNTAJE PARCIAL (opcional):
+   Por defecto, una opción correcta vale 1 punto y una incorrecta vale 0.
+   Si en una pregunta hay varias opciones correctas pero no querés que
+   valgan lo mismo, agregá "points" a esa opción, por ejemplo:
+
+     { text: "La mejor respuesta", correct: true, points: 1,
+       explanation: "..." },
+     { text: "También es válida, pero menos completa", correct: true, points: 0.5,
+       explanation: "..." },
+     { text: "Respuesta incorrecta", correct: false,
+       explanation: "..." }
+
+   El máximo de esa pregunta queda fijado por el "points" más alto entre
+   sus opciones (en el ejemplo, 1). No hace falta poner "points" en todas
+   las opciones: si no lo agregás, se usa el valor por defecto (1 si es
+   correcta, 0 si no).
+
+   SUBCATEGORÍAS (i, ii, iii) (opcional):
+   Si la pregunta tiene afirmaciones numeradas, agregá "subitems":
+
+     subitems: ["Primera afirmación", "Segunda afirmación", "Tercera afirmación"]
+
+   Se muestran como lista con números romanos (i, ii, iii) entre la
+   pregunta y las opciones. Las opciones después referencian esos
+   números normalmente (ej: "Solo I y II", "I, II y III").
+
+   IMÁGENES (opcional):
+   Agregá "image" con la ruta del archivo:
+
+     image: "imagenes/p1_montaje.png"
+
+   Creá una carpeta "imagenes" al lado de este archivo .html y poné ahí
+   las fotos/diagramas. El nombre en "image" tiene que coincidir exacto
+   con el nombre del archivo (mayúsculas/minúsculas incluidas).
+
+   IMÁGENES DENTRO DE CADA OPCIÓN (opcional):
+   Si cada opción de respuesta es una imagen distinta (en vez de una sola
+   imagen para toda la pregunta), agregá "image" dentro de cada opción:
+
+     options: [
+       { text: "Opción A", image: "imagenes/opcion_a.png", correct: true, explanation: "..." },
+       { text: "Opción B", image: "imagenes/opcion_b.png", correct: false, explanation: "..." }
+     ]
+
+   Se puede combinar con "image" a nivel de pregunta si hace falta.
+
+   PREGUNTAS AL AZAR (opcional):
+   Si a una práctica le agregás "questionsPerAttempt: N" (al mismo nivel
+   que "title" y "questions"), cada vez que alguien entra a esa práctica
+   la app elige N preguntas al azar de todas las que tengas cargadas, en
+   orden aleatorio. Por ejemplo:
+
+     P1: {
+       title: "...",
+       subtitle: "...",
+       questionsPerAttempt: 3,
+       questions: [ ...podés tener 10 acá, elige 3 al azar... ]
+     }
+
+   Si no agregás este campo, se muestran todas las preguntas de esa
+   práctica (igual en orden aleatorio cada vez).
+
+   PREGUNTAS FIJAS DENTRO DEL SORTEO (opcional):
+   Si querés que algunas preguntas aparezcan SIEMPRE (y que el azar solo
+   se aplique al resto), agregales "fixed: true" a esas preguntas:
+
+     { question: "Esta siempre aparece", fixed: true, options: [...] }
+
+   Las que no tengan "fixed" forman el pool del que se sortean las que
+   falten hasta llegar a "questionsPerAttempt". Por ejemplo, con
+   questionsPerAttempt: 4 y 2 preguntas fijas, se sortean 2 más de entre
+   las que queden sin marcar.
+
+   PREGUNTAS DE SELECCIÓN MÚLTIPLE (varias opciones a la vez) (opcional):
+   Si una pregunta tiene varias respuestas correctas independientes (no
+   una sola "mejor" opción), agregale "multiSelect: true" y "maxPoints"
+   con el puntaje máximo real de esa pregunta:
+
+     {
+       question: "...",
+       multiSelect: true,
+       maxPoints: 1,
+       options: [
+         { text: "...", correct: true, points: 0.34, explanation: "..." },
+         { text: "...", correct: true, points: 0.33, explanation: "..." },
+         { text: "...", correct: true, points: 0.33, explanation: "..." },
+         { text: "...", correct: false, explanation: "..." }
+       ]
+     }
+
+   El estudiante puede tocar varias opciones antes de confirmar con el
+   botón "Confirmar respuesta". El puntaje final suma los puntos de las
+   opciones correctas que marcó (sin pasarse de "maxPoints"), y las
+   opciones correctas que NO marcó quedan resaltadas igual al confirmar,
+   para que las vea y aprenda de la explicación.
+
+   VARIANTES DE UNA MISMA PREGUNTA (mostrar solo una) (opcional):
+   Si tenés dos (o más) versiones de la misma pregunta y querés que en
+   cada intento aparezca SOLO UNA de ellas al azar (nunca las dos),
+   usá "variants" en vez de escribir la pregunta directamente:
+
+     {
+       variants: [
+         { question: "Versión original...", options: [...] },
+         { question: "Versión alternativa...", options: [...] }
+       ]
+     }
+
+   Cada vez que alguien entra a la práctica, se sortea cuál de las
+   versiones del array "variants" se le muestra. "fixed" y
+   "questionsPerAttempt" siguen funcionando igual sobre el resultado ya
+   sorteado.
+
+   PREGUNTAS CON SUBPREGUNTAS (i, ii, iii en una sola tarjeta) (opcional):
+   Si una pregunta tiene varias partes (i, ii, iii...) que se responden
+   TODAS JUNTAS en la misma pantalla y se corrigen con un solo botón de
+   "Confirmar respuesta", usá "subquestions" en vez de "options":
+
+     {
+       question: "Texto introductorio general (opcional)",
+       subquestions: [
+         {
+           prompt: "i) Primera parte",
+           options: [
+             { text: "...", correct: true, explanation: "..." },
+             { text: "...", correct: false, explanation: "..." }
+           ]
+         },
+         {
+           prompt: "ii) Segunda parte",
+           multiSelect: true,
+           maxPoints: 1,
+           options: [
+             { text: "...", correct: true, points: 0.5, explanation: "..." },
+             { text: "...", correct: true, points: 0.5, explanation: "..." },
+             { text: "...", correct: false, explanation: "..." }
+           ]
+         }
+       ]
+     }
+
+   Cada subpregunta funciona igual que una pregunta común (podés usar
+   "points", "multiSelect" y "maxPoints" dentro de cada una, igual que en
+   una pregunta normal). El puntaje de la tarjeta es la suma de lo que se
+   gana en cada subpregunta. No se puede combinar "subquestions" con
+   "options" en la misma pregunta: una pregunta usa una cosa o la otra.
+===================================================================== */
+/* =====================================================================
+   CONEXIÓN CON GOOGLE APPS SCRIPT (para que los docentes vean los
+   resultados, sin que el estudiante pueda editar el puntaje)
+   Pegá acá la URL que termina en /exec que te dio Google al implementar
+   el script como "Aplicación web".
+===================================================================== */
+const APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzK48sRbZxGoJ2O_5mhgZLaDpEkE6sBZYS4rQspkfVqTlHvtJcLd-S6zx4HbGQGpxZj/exec";
+
+let studentGroup = "";
+
+let studentName = "";
+let studentCedula = "";
+
+const quizSets = {
+  P1: {
+    title: "P1 · Óxido de cobre(II)",
+    subtitle: "Descomposición térmica de carbonato",
+    questions: [
+      {
+        question: "¿Qué material consideras que sería adecuado para realizar la precipitación de carbonato básico de cobre?",
+        options: [
+          { text: "Vaso de Bohemia", correct: true, points: 0.5,
+            explanation: "El tubo Falcon permite centrifugar directamente para separar el precipitado, sin trasvasar a otro recipiente. El vaso de Bohemia es el más utilizado para precipitar, pero requiere un paso extra de trasvase antes de separar el sólido, por lo que hay más pérdidas de rendimiento." },
+          { text: "Tubo falcon", correct: true, points: 1,
+            explanation: "El tubo Falcon permite centrifugar directamente para separar el precipitado, sin trasvasar a otro recipiente. El vaso de Bohemia es el más utilizado para precipitar, pero requiere un paso extra de trasvase antes de separar el sólido, por lo que hay más pérdidas de rendimiento." },
+          { text: "Matraz Erlenmeyer", correct: false,
+            explanation: "La forma del matraz Erlenmeyer dificulta retirar el sólido de su interior, por lo que se pierde mucho más sólido en ese trasvase hacia otro recipiente." },
+          { text: "Tubo de ensayo", correct: false, explanation: "" }
+        ]
+      },
+      {
+        question: "¿Qué tipo de agitación consideras más adecuada para mezclar los reactivos íntimamente durante una reacción?",
+        options: [
+          { text: "a) Agitación circular, rotando el vaso con la mano", image: "imagenes/p1_agitacion_a.png", correct: false, explanation: "" },
+          { text: "b) Agitación con varilla de vidrio", image: "imagenes/p1_agitacion_b.png", correct: true, explanation: "" }
+        ]
+      },
+      {
+        question: "¿Con cuál de los siguientes materiales realizarías un agregado \"gota a gota\"?",
+        options: [
+          { text: "Pipeta Pasteur", correct: true, points: 1,
+            explanation: "La pipeta Pasteur permite controlar la velocidad de adición y regular el goteo, lo que permite obtener una relación de velocidades de nucleación y crecimiento adecuada para la obtención de cristales de buen tamaño." },
+          { text: "Pipeta graduada", correct: false,
+            explanation: "Las pipetas graduada y aforada están pensadas para medir volúmenes, no para controlar el goteo." },
+          { text: "Pipeta aforada", correct: false,
+            explanation: "Las pipetas graduada y aforada están pensadas para medir volúmenes, no para controlar el goteo." },
+          { text: "De a poco, desde un vaso de Bohemia o matraz", correct: false,
+            explanation: "Verter \"de a poco\" desde un vaso o matraz no da el mismo nivel de control que una pipeta Pasteur y puede conducir a un agregado muy rápido, que influye en el tamaño del precipitado obtenido al final." }
+        ]
+      },
+      {
+        question: "En relación a la medida de líquidos, indicá qué materiales considerás adecuados para medir volumen en cada situación (podés marcar más de una opción por parte):",
+        subquestions: [
+          {
+            prompt: "i) Soluciones o líquidos para usar como reactivo de síntesis",
+            multiSelect: true,
+            maxPoints: 1,
+            options: [
+              { text: "Pipeta graduada", correct: true, points: 0.5,
+                explanation: "Para medir reactivos líquidos no se necesita la exactitud de una pipeta aforada, ya que no se está realizando una determinación de un analito, sino una síntesis. Alcanza con una pipeta graduada o una probeta, que permiten medir volúmenes variables con precisión suficiente." },
+              { text: "Pipeta aforada", correct: false,
+                explanation: "Ofrece una precisión mayor a la necesaria para este uso: al no tratarse de una determinación analítica sino de una síntesis, no hace falta ese nivel de exactitud, y además la pipeta aforada solo permite medir un volumen fijo, sin flexibilidad para volúmenes variables." },
+              { text: "Probeta", correct: true, points: 0.5,
+                explanation: "Para medir reactivos líquidos no se necesita la exactitud de una pipeta aforada, ya que no se está realizando una determinación de un analito, sino una síntesis. Alcanza con una pipeta graduada o una probeta, que permiten medir volúmenes variables con precisión suficiente." },
+              { text: "Pipeta Pasteur graduada", correct: false,
+                explanation: "No es adecuada para medir volúmenes con precisión suficiente: sus graduaciones son aproximadas y está pensada más para transferir líquidos gota a gota o en pequeñas cantidades, no para dosificar el volumen de un reactivo de síntesis." },
+              { text: "Vaso de Bohemia graduado", correct: false,
+                explanation: "Sus graduaciones son poco precisas, por lo que no garantiza la precisión suficiente para medir un reactivo." },
+              { text: "Se puede medir a ojo", correct: false,
+                explanation: "Al ser un reactivo que interviene en la síntesis, medirlo a ojo introduce un margen de error muy grande, que puede alterar el grado de avance de la reacción esperado." }
+            ]
+          },
+          {
+            prompt: "ii) Líquidos de lavado o secado",
+            multiSelect: true,
+            maxPoints: 1,
+            options: [
+              { text: "Pipeta graduada", correct: true, points: 0.33,
+                explanation: "El volumen de estos líquidos no es crítico, ya que su función es eliminar impurezas o restos de otros solventes. Por eso es válido medir de forma aproximada (probeta, pipeta graduada) o incluso a ojo." },
+              { text: "Pipeta aforada", correct: false,
+                explanation: "No es necesaria tanta precisión para medir líquidos de lavado/secado." },
+              { text: "Probeta", correct: true, points: 0.33,
+                explanation: "El volumen de estos líquidos no es crítico, ya que su función es eliminar impurezas o restos de otros solventes. Por eso es válido medir de forma aproximada (probeta, pipeta graduada) o incluso a ojo." },
+              { text: "Pipeta Pasteur graduada", correct: false,
+                explanation: "No es la opción más práctica en este caso: está pensada para transferir volúmenes chicos gota a gota, no para medir cantidades de líquido de lavado, donde conviene un material más rápido y directo como la probeta o la pipeta graduada." },
+              { text: "Vaso de Bohemia graduado", correct: false,
+                explanation: "Aunque sus graduaciones son aproximadas, no es el material más práctico para este fin: resulta más cómodo usar una probeta o pipeta graduada, o directamente medir a ojo." },
+              { text: "Se puede medir a ojo", correct: true, points: 0.34,
+                explanation: "El volumen de estos líquidos no es crítico, ya que su función es eliminar impurezas o restos de otros solventes. Por eso es válido medir de forma aproximada (probeta, pipeta graduada) o incluso a ojo." }
+            ]
+          }
+        ]
+      },
+      {
+        question: "Luego de secar el CuO a 80°C según lo indicado en la técnica, un estudiante obtuvo el producto que se muestra en la imagen. ¿Considerás que este sólido está listo para ser entregado?",
+        image: "imagenes/p1_cuo_seco.jpg",
+        options: [
+          { text: "Sí", correct: false,
+            explanation: "El sólido que se muestra en la imagen presenta grumos o aglomerados, lo que indica que no se encuentra completamente seco. La formación de estos aglomerados se debe a la humedad residual que mantiene unidas las partículas de sólido, por lo que aún hay agua en el interior de los mismos." },
+          { text: "No", correct: true,
+            explanation: "El sólido que se muestra en la imagen presenta grumos o aglomerados, lo que indica que no se encuentra completamente seco. Por lo tanto, el estudiante debe romper esos aglomerados y secar en estufa un rato más para que se encuentre listo para entregar." }
+        ]
+      }
+    ]
+  },
+  P2: {
+    title: "P2 · Bicarbonato de sodio",
+    subtitle: "A partir de dióxido de carbono",
+    questions: [
+      {
+        variants: [
+          {
+            question: "¿Qué características tiene que presentar un sólido para poder separarlo de manera eficiente mediante filtrado a vacío?",
+            options: [
+              { text: "Tamaño de partícula pequeño, decanta con dificultad", correct: false, explanation: "Las partículas finas tienden a atravesar o tapar el papel de filtro, lo que enlentece la filtración y la hace ineficaz." },
+              { text: "Tamaño de partícula pequeño, decanta fácilmente", correct: false, explanation: "Aunque decante con facilidad, el tamaño pequeño sigue siendo problemático para el papel de filtro." },
+              { text: "Tamaño de partícula grande, decanta fácilmente", correct: true,
+                explanation: "Para que la filtración a vacío sea eficiente, el sólido debe tener un tamaño de partícula suficientemente grande como para quedar retenido en el papel de filtro sin taparlo ni atravesarlo. El tamaño de partícula grande permite que el sólido decante con mayor facilidad." },
+              { text: "Tamaño de partícula grande, decanta con dificultad", correct: false, explanation: "Por lo general, si las partículas son grandes decantan con facilidad." }
+            ]
+          },
+          {
+            question: "¿Qué características tiene que presentar un sólido para que la centrifugación sea el único método posible para su separación?",
+            options: [
+              { text: "Tamaño de partícula pequeño, decanta con dificultad", correct: true,
+                explanation: "Cuando las partículas son muy pequeñas, no sedimentan por gravedad en un tiempo razonable y además podrían tapar o atravesar el papel de filtro. La centrifugación aplica una fuerza que las compacta rápidamente en el fondo del tubo." },
+              { text: "Tamaño de partícula pequeño, decanta fácilmente", correct: false,
+                explanation: "Es contradictorio: si las partículas son muy pequeñas, no decantan fácilmente por gravedad, sino que quedan en suspensión durante mucho tiempo. Por eso esta combinación no tiene sentido y no describe el caso que exige centrifugación." },
+              { text: "Tamaño de partícula grande, decanta fácilmente", correct: false,
+                explanation: "Si el sólido decanta fácilmente por gravedad, no hace falta centrifugar: alcanza con dejarlo reposar y luego decantar o filtrar. La centrifugación no sería el único método posible, sino uno innecesario." },
+              { text: "Tamaño de partícula grande, decanta con dificultad", correct: false,
+                explanation: "También es contradictorio: las partículas grandes, al tener más masa, sedimentan por gravedad con relativa facilidad. Que decanten con dificultad es más característico de partículas pequeñas, no grandes." }
+            ]
+          }
+        ]
+      },
+      {
+        question: "¿Cuál de las siguientes afirmaciones es una ventaja de utilizar una mezcla de solventes como líquido de lavado?",
+        options: [
+          { text: "Aumentar la solubilidad del precipitado para recuperarlo mejor", correct: false, explanation: "Al contrario, aumentar la solubilidad sería contraproducente porque implica mayores pérdidas durante el lavado." },
+          { text: "Disminuir la pérdida de producto mientras se eliminan impurezas", correct: true,
+            explanation: "Una mezcla de solventes permite ajustar la polaridad del líquido de lavado para que arrastre preferentemente a las impurezas (más solubles en él) sin arrastrar una cantidad significativa de producto, minimizando las pérdidas." },
+          { text: "Evitar la evaporación excesiva del solvente", correct: false, explanation: "No es el objetivo del lavado, además, cierta evaporación puede ser útil para el secado posterior." },
+          { text: "Todas son correctas", correct: false, explanation: "Incorrecta porque a) y c) no son ventajas de usar una mezcla de solventes." }
+        ]
+      },
+      {
+        question: "¿Qué característica suele buscarse al elegir una mezcla de solventes para el lavado de un sólido?",
+        options: [
+          { text: "Que ambos solventes disuelvan totalmente el sólido", correct: false, explanation: "Si ambos solventes disuelven totalmente el sólido, el producto se perdería durante el lavado junto con las impurezas." },
+          { text: "Que la mezcla tenga el mayor punto de ebullición posible", correct: false, explanation: "El punto de ebullición no es relevante para el lavado, lo que importa es que el solvente pueda disolver las impurezas, sin disolver el producto." },
+          { text: "Que las impurezas sean más solubles que el producto", correct: true,
+            explanation: "Lo ideal es que el líquido de lavado disuelva las impurezas pero afecte lo menos posible al producto, de modo que el lavado elimine contaminantes sin disolver el sólido de interés." },
+          { text: "Que el sólido reaccione con uno de los solventes", correct: false, explanation: "Una reacción del sólido con alguno de los solventes podría alterar o destruir el producto, que es  justamente lo que se quiere evitar." }
+        ]
+      },
+      {
+        question: "¿Cuál de las siguientes imágenes presenta un tapón correctamente ajustado a su matraz?",
+        options: [
+          { text: "Imagen a", image: "imagenes/p2_tapon_a.png", correct: true, points: 1,
+            explanation: "El tapón se encuentra correctamente ajustado, no permite pérdidas de gases." },
+          { text: "Imagen b", image: "imagenes/p2_tapon_b.png", correct: false,
+            explanation: "El tapón no se encuentra lo suficientemente ajustado, puede haber pérdida de gases." },
+          { text: "Imagen c", image: "imagenes/p2_tapon_c.png", correct: true, points: 0.5,
+            explanation: "Este ajuste para el tapón previene que haya pérdidas de gases, pero también será difícil de retirar una vez finalizada la síntesis." }
+        ]
+      },
+      {
+        question: "¿Cómo tiene que encontrarse el tapón del balón que contiene el HCl durante el empleo de la bola de decantación para verter?",
+        options: [
+          { text: "Imagen a", image: "imagenes/p2_bola_a.png", correct: false, explanation: "Si el balón está tapado, no entra aire para reemplazar el líquido que sale, lo que genera una diferencia de presión que frena o impide el goteo." },
+          { text: "Imagen b", image: "imagenes/p2_bola_b.png", correct: true, explanation: "Colocar el tapón de esta forma permite la entrada de aire al balón, que reemplaza al líquido que sale al gotear (la presión dentro del balón es igual a la atmosférica). Además, al no destapar completamente el balón, se minimizan los vapores del HCl que salen al ambiente, minimizando el riesgo para quienes se encuentran en el laboratorio." },
+          { text: "Imagen c", image: "imagenes/p2_bola_c.png", correct: false, explanation: "Al retirar completamente el tapón, los vapores del HCl salen de la bola y permanecen en el ambiente, lo que representa un riesgo para quienes están en el laboratorio." }
+        ]
+      }
+    ]
+  },
+  P3: {
+    title: "P3 · Cloruro de cobre(I)",
+    subtitle: "Obtención de CuCl",
+    questions: [
+      {
+        question: "Indica cuál de las siguientes puede ser una consecuencia de agregar un reactivo demasiado rápido al realizar una precipitación",
+        options: [
+          { text: "Se favorece el crecimiento ordenado de cristales grandes", correct: false, explanation: "Ocurre lo contrario, la sobresaturación local favorece cristales pequeños y desordenados, no grandes." },
+          { text: "Se produce sobresaturación local y formación de precipitados muy finos", correct: true,
+            explanation: "Al agregar un reactivo muy rápidamente se generan zonas de alta concentración local (sobresaturación), lo que favorece la nucleación masiva y simultánea de muchos cristales, en lugar del crecimiento ordenado de cristales grandes." },
+          { text: "Disminuye la velocidad de nucleación", correct: false, explanation: "Ocurre lo contrario, la concentración local alta favorece la nucleación masiva y simultánea." },
+          { text: "Se evita la formación de impurezas", correct: false, explanation: "Los cristales pequeños formados por adición rápida tienden a tener más impurezas ocluidas." }
+        ]
+      },
+      {
+        question: "¿Para una síntesis cualquiera, qué material consideras adecuado para realizar una precipitación si luego se va a separar por decantación?",
+        options: [
+          { text: "Vaso de Bohemia", correct: true, explanation: "La boca ancha del vaso de Bohemia permite verter el sobrenadante sin perturbar el sólido depositado en el fondo. Además, permite una agitación adecuada durante la precipitación" },
+          { text: "Tubo Falcon", correct: false, explanation: "Se podría usar para precipitar sólidos coloidales que sean difíciles de trasvasar, pero como la pregunta establece que el sólido obtenido se va a separar por decantación (por lo tanto, tiene un tamaño de partícula grande), el tubo Falcon es ineficiente para realizar la precipitación." },
+          { text: "Matraz Erlenmeyer", correct: false, explanation: "Su forma dificulta retirar el sólido del fondo, genera mayores pérdidas de producto." },
+          { text: "Tubo de ensayo", correct: false, explanation: "Es demasiado pequeño y de boca angosta, por lo que dificulta la agitación durante la precipitación." }
+        ]
+      },
+      {
+        question: "¿Qué material de vidrio consideras adecuado para disolver un sólido? Selecciona la o las opciones correctas:",
+        options: [
+          { text: "Vaso de Bohemia y varilla", correct: true, points: 0.5,
+            explanation: "El vaso de Bohemia y el matraz Erlenmeyer permiten agregar sólido y solvente y agitar con comodidad." },
+          { text: "Probeta", correct: false,
+            explanation: "La probeta no se puede usar para disolver porque está diseñada para medir volúmenes, no para mezclar, y su boca angosta dificulta agregar sólido y agitar." },
+          { text: "Matraz Erlenmeyer", correct: true, points: 0.5,
+            explanation: "El vaso de Bohemia y el matraz Erlenmeyer permiten agregar sólido y solvente y agitar con comodidad." },
+          { text: "Todas son correctas", correct: false, explanation: "La probeta no se puede usar para disolver porque está diseñada para medir volúmenes, no para mezclar, y su boca angosta dificulta agregar sólido y agitar." }
+        ]
+      },
+      {
+        question: "¿Cuáles de las siguientes son precauciones que hay que tener al momento de filtrar a vacío?",
+        options: [
+          { text: "Verificar que el vacío esté conectado al momento de agregar líquidos", correct: false, explanation: "El vacío debe estar desconectado al agregar líquidos, para evitar salpicaduras o pérdidas de producto." },
+          { text: "Comprobar que el papel de filtro cubra todos los orificios del embudo Büchner y que no se encuentre levantado en los bordes", correct: true, points: 0.5, explanation: "Al comprobar que el papel cubra todos los orificios sin levantarse en los bordes, se evitan pérdidas de sólido." },
+          { text: "Revisar que el líquido filtrado no llegue al tubo por el que se conecta el matraz a la bomba", correct: true, points: 0.5, explanation: "Revisar que el filtrado no llegue al tubo de conexión con la bomba previene dañarla." },
+          { text: "Asegurarse de haber colocado dos papeles de filtro", correct: false, explanation: "No es necesario colocar dos papeles de filtro para una filtración cualquiera, ya que podrían dificultar el paso del líquido." }
+        ]
+      },
+      {
+        question: "¿Qué estrategia consideras adecuada para lavar un precipitado?",
+        options: [
+          { text: "Utilizar una única porción con un volumen grande de líquido de lavado", correct: false, explanation: "Es menos eficiente que repetir los lavados con varias porciones pequeñas, ya que cada porción arrastra una fracción adicional de impurezas." },
+          { text: "Utilizar varias porciones pequeñas de líquido de lavado, asegurándose de apenas cubrir el sólido con el líquido en cada una de ellas", correct: true, explanation: "Lavar con varias porciones pequeñas, apenas cubriendo el sólido en cada una, es más eficiente que usar un volumen grande: cada nueva porción de líquido arrastra una fracción de las impurezas remanentes, logrando un lavado más completo con menor riesgo de disolver el producto." },
+          { text: "Utilizar el mayor volumen de líquido de lavado posible", correct: false, explanation: "Usar un volumen muy grande de líquido de lavado aumenta el riesgo de disolver y perder parte del precipitado." },
+          { text: "Evitar el lavado del precipitado ya que puede conducir a pérdidas", correct: false, explanation: "Evitar el lavado dejaría impurezas en el sólido final, lo que disminuye su pureza." }
+        ]
+      },
+      {
+        question: "¿Qué debes hacer con el tubo Eppendorf (que contiene el CuCl) al llegar a tu casa para que seque bien?",
+        options: [
+          { text: "Destapar el tubo y dejarlo dentro del desecador cerrado", correct: true, explanation: "Al dejar el tubo destapado, la humedad retenida junto al sólido puede escapar y ser absorbida por la atmósfera seca que genera el desecador cerrado." },
+          { text: "No destapar el tubo y dejarlo dentro del desecador abierto", correct: false, explanation: "El tubo cerrado no permite sacar la humedad, y el desecador abierto no genera la atmósfera seca necesaria para secar el sólido." },
+          { text: "Destapar tanto el tubo como el desecador", correct: false, explanation: "El desecador abierto no genera una atmósfera seca, por lo que el sólido queda expuesto a la humedad ambiente." },
+          { text: "No destapar ni el tubo ni el desecador", correct: false, explanation: "La humedad queda atrapada junto al sólido y no puede eliminarse, por más de que el desecador esté generando una atmósfera seca." }
+        ]
+      }
+    ]
+  },
+  P4: {
+    title: "P4 · Cristalización selectiva",
+    subtitle: "Dicromato de potasio y cloruro de sodio",
+    questions: [
+      {
+        question: "Las siguientes columnas refieren a distintas formas de disolver un sólido (mediante datos de solubilidad y agregando solvente de a poco). ¿Cuál de las siguientes asignaciones es correcta?",
+        subitems: [
+          "Columna A: permite usar el volumen mínimo necesario para disolver el sólido (aunque lleva más tiempo llegar a dicho volumen); existe riesgo de agregar un exceso de solvente.",
+          "Columna B: es rápido y más reproducible; no considera la presencia de impurezas que puedan afectar la solubilidad; los datos teóricos pueden no ajustarse a las condiciones reales del experimento."
+        ],
+        options: [
+          { text: "Columna A = Disolución mediante datos de solubilidad · Columna B = Disolución con agregado de solvente de a poco", correct: false,
+            explanation: "La Columna A describe agregar solvente de a poco (lleva más tiempo y hay riesgo de excederse), no usar datos de solubilidad. La Columna B describe usar datos de solubilidad (rápido y reproducible, pero sin considerar impurezas), no agregar solvente de a poco." },
+          { text: "Columna A = Disolución con agregado de solvente de a poco · Columna B = Disolución mediante datos de solubilidad", correct: true,
+            explanation: "Agregar solvente de a poco permite usar el volumen mínimo necesario, pero lleva más tiempo y existe riesgo de pasarse del punto óptimo (Columna A). En cambio, basarse en datos de solubilidad tabulados es más rápido y reproducible, aunque no contempla impurezas que puedan alterar la solubilidad real (Columna B)." }
+        ]
+      },
+      {
+        question: "Al disolver la mezcla K₂Cr₂O₇/NaCl en agua a ebullición, ¿por qué se necesita un volumen V₀ mayor que V₁₀₀ para enfriar hasta 0°C?",
+        options: [
+          { text: "Porque al enfriar el volumen de agua disminuye físicamente", correct: false, explanation: "La disminución en el volumen del agua debida a que la temperatura baja es mínima, no explica la necesidad de usar más agua." },
+          { text: "Porque a 0°C la solubilidad de todas las sales es menor que a 100°C, y se necesita más agua para mantenerlas disueltas", correct: true,
+            explanation: "A 0°C, la solubilidad del NaCl, K₂Cr₂O₇ y las otras sales que podrían formarse es menor que a 100°C. Es por esto que se necesita más agua (V₀ > V₁₀₀) para que solo cristalice el K₂Cr₂O₇ y las demás sales se mantengan en solución." },
+          { text: "Porque el K₂Cr₂O₇ es más soluble en frío", correct: false, explanation: "Ocurre lo opuesto, la solubilidad del K₂Cr₂O₇ disminuye con la temperatura, por eso cristaliza al enfriar." },
+          { text: "Porque la densidad de la solución aumenta al enfriar, lo que reduce la capacidad de disolver sales", correct: false, explanation: "La densidad no es el factor determinante, lo más importante es la disminución de la solubilidad de las sales al bajar la temperatura." }
+        ]
+      },
+      {
+        question: "¿Por qué se lava el K₂Cr₂O₇ con agua helada en lugar de a temperatura ambiente?",
+        options: [
+          { text: "Porque el agua fría disuelve mejor las impurezas de NaCl", correct: false, explanation: "La solubilidad del NaCl varía muy poco con la temperatura, por lo que el agua fría no ofrece ventaja en este caso." },
+          { text: "Para que el proceso de lavado sea más rápido", correct: false, explanation: "El agua fría sirve para reducir las pérdidas de producto, no acelera el lavado." },
+          { text: "Para minimizar las pérdidas por solubilidad", correct: true,
+            explanation: "La solubilidad del K₂Cr₂O₇ pasa de 12 g/100 g H₂O a 20°C a solo 5 g/100 g H₂O a 0°C. Usar agua helada minimiza su disolución durante el lavado." },
+          { text: "Para evitar la descomposición del K₂Cr₂O₇", correct: false, explanation: "El K₂Cr₂O₇ no se descompone a temperatura ambiente, la función del agua helada es minimizar pérdidas por solubilidad." }
+        ]
+      },
+      {
+        question: "Para separar el NaCl de la solución sobrenadante se evapora el agua en lugar de enfriar. ¿Cuál de las siguientes puede ser una razón?",
+        options: [
+          { text: "Porque el NaCl es insoluble en agua caliente", correct: false, explanation: "El NaCl es soluble en agua a cualquier temperatura, por lo que la solubilidad no justifica la evaporación como método de separación." },
+          { text: "Porque la solubilidad del NaCl varía muy poco con la temperatura", correct: true,
+            explanation: "La solubilidad del NaCl es casi constante (35,7-39,8 g/100 g H₂O entre 0 y 100°C). Por lo tanto, enfriar la solución haría que cristalice una cantidad insignificante de dicha sal. La forma más eficiente de que cristalice es reducir la cantidad de solvente por evaporación." },
+          { text: "Porque al calentar se elimina el K₂Cr₂O₇ residual por volatilización", correct: false, explanation: "El K₂Cr₂O₇ no es volátil a las temperaturas de evaporación del agua." },
+          { text: "Porque el NaCl tiene mayor solubilidad en frío que en caliente", correct: false, explanation: "La solubilidad del NaCl es prácticamente constante en un amplio rango de temperaturas, por lo que enfriar no induce su cristalización de forma significativa." }
+        ]
+      },
+      {
+        question: "¿Qué propiedad del NaCl te permite saber cuándo puedes parar de lavarlo?",
+        options: [
+          { text: "La densidad", correct: false, explanation: "No es un indicador práctico y tampoco puede evaluarse a simple vista." },
+          { text: "La cantidad", correct: false, explanation: "Medir la cantidad de NaCl después de cada lavado no permite determinar si aún contiene impurezas de K₂Cr₂O₇." },
+          { text: "El color", correct: true,
+            explanation: "El NaCl obtenido presenta una coloración anaranjada o amarillenta a causa de impurezas de K₂Cr₂O₇. Dado que el NaCl puro es de color blanco, la intensidad del color actúa como un indicador visual del nivel de contaminación. Por esta razón, es recomendable continuar con los lavados mientras el sólido mantenga un color anaranjado, y dar por finalizado el proceso cuando adquiera un aspecto completamente blanco y homogéneo." },
+          { text: "El olor", correct: false, explanation: "Ni el NaCl ni el K₂Cr₂O₇ tienen un olor característico que sirva como indicador de pureza." }
+        ]
+      },
+      {
+        question: "¿Qué solvente elegirías para secar el NaCl obtenido en la práctica?",
+        options: [
+          { text: "Etanol", correct: true, points: 1,
+            explanation: "El etanol y la acetona son solventes volátiles que no disuelven (o disuelven muy poco) al NaCl y son miscibles con el agua, por lo que ayudan a arrastrar el agua residual y acelerar el secado sin afectar al producto." },
+          { text: "Acetona", correct: true, points: 1,
+            explanation: "El etanol y la acetona son solventes volátiles que no disuelven (o disuelven muy poco) al NaCl y son miscibles con el agua, por lo que ayudan a arrastrar el agua residual y acelerar el secado sin afectar al producto." },
+          { text: "Éter", correct: false, explanation: "Si bien es muy volátil, no es miscible con el agua, que es el solvente utilizado en la solución de lavado para el NaCl, por lo que no sirve para secar dicho compuesto." },
+          { text: "Ácido acético glacial", correct: false, explanation: "No es lo suficientemente volátil como para facilitar el secado y dejaría residuos en el sólido." }
+        ]
+      }
+    ]
+  },
+  P5: {
+    title: "P5 · Tetraperoxocromato(V) de potasio",
+    subtitle: "K₃[Cr(O₂)₄]",
+    questions: [
+      {
+        question: "¿Cuál es una forma adecuada y práctica de medir una pequeña cantidad del peroxocompuesto obtenido en el laboratorio para poder realizar los ensayos planteados?",
+        options: [
+          { text: "Pesar en una balanza", correct: false, explanation: "No es una forma práctica para este caso: se necesita una cantidad tan pequeña que pesarla en balanza sería innecesariamente lento y poco práctico para un simple ensayo cualitativo, donde no hace falta esa precisión." },
+          { text: "Tomar una pequeña cantidad de sólido que apenas cubra la esquina de la parte plana de la espátula", correct: true,
+            explanation: "Tomar solo una cantidad que cubra apenas la esquina de la parte plana de la espátula asegura una cantidad mínima, suficiente para un ensayo cualitativo, sin necesitar la precisión (ni el tiempo) de pesar en balanza, y evitando pérdidas o contaminación al verter directamente desde el recipiente." },
+          { text: "Tirar una pequeña cantidad de sólido directamente desde el recipiente que lo contiene", correct: false, explanation: "Al no regular la cantidad que cae, se puede agregar de más, lo cual puede ser peligroso al tratarse de un peroxocompuesto. Además, si el sólido no cae correctamente dentro del tubo de ensayo donde se realiza la reacción, se pierde producto innecesariamente." },
+          { text: "Ninguna de las anteriores", correct: false, explanation: "No aplica, ya que la opción b sí describe una forma adecuada y práctica de medir la cantidad necesaria." }
+        ]
+      },
+      {
+        question: "¿Por qué el K₃[Cr(O₂)₄] no puede secarse en estufa ni con éter, a diferencia de otros sólidos?",
+        options: [
+          { text: "Porque la temperatura alta de la estufa acelera su descomposición y en contacto con éter podría producirse una reacción explosiva", correct: true,
+            explanation: "El K₃[Cr(O₂)₄] es termodinámicamente inestable y el calor de la estufa acelera su descomposición (es un proceso exotérmico). Por otro lado, los peroxocompuestos en combinación con solventes orgánicos como éteres, alcoholes o cetonas pueden dar reacciones redox muy exotérmicas, potencialmente violentas o explosivas. Por eso se usa acetona para el secado final, con precaución y en pequeñas cantidades." },
+          { text: "Porque se calcinaría en la estufa y el éter lo disolvería", correct: false, explanation: "El problema no es que el éter 'disuelva' el sólido, sino que en contacto con peroxocompuestos puede generar una reacción redox exotérmica peligrosa. Además, la calcinación tampoco es el riesgo principal del calentamiento, sino la aceleración de su descomposición." },
+          { text: "Porque tanto el calentamiento como el éter reducen el Cr(V) a Cr(III), impurificando el producto", correct: false, explanation: "El riesgo no es una reducción que 'impurifique' el producto, sino la descomposición térmica y la posible reacción explosiva con el éter." },
+          { text: "Porque el éter tiene un punto de ebullición muy alto y no secaría el sólido eficientemente", correct: false, explanation: "El éter etílico tiene un punto de ebullición muy bajo (~35°C), lo que en general lo haría bueno para secar rápido. El motivo por el cual no se usa es la peligrosidad de la combinación con el peroxocompuesto, no su volatilidad." }
+        ]
+      },
+      {
+        question: "En la reacción de reconocimiento con ácido acético y éter, ¿qué función cumple el éter?",
+        options: [
+          { text: "Actuar como reductor del Cr(V) para facilitar la formación de Cr(III)", correct: false, explanation: "En realidad ocurre lo contrario: el éter ayuda a estabilizar el CrO(O₂)₂ extrayéndolo a la fase orgánica, retrasando su reducción a Cr(III). Si el éter actuara como reductor, estaría favoreciendo justamente lo que se busca evitar (la descomposición del compuesto que se quiere observar)." },
+          { text: "Extraer y estabilizar el CrO(O₂)₂ en la fase orgánica", correct: true,
+            explanation: "El CrO(O₂)₂ es inestable en solución acuosa (se reduce rápidamente a Cr(III)), pero se estabiliza en éter. Al agregar éter se crea una fase orgánica donde el compuesto azul-violeta se separa y puede ser observado antes de descomponerse." },
+          { text: "Acelerar la descomposición del peroxocompuesto", correct: false, explanation: "Es lo opuesto a su función: el éter no acelera la descomposición, sino que la retrasa al extraer el CrO(O₂)₂ hacia una fase donde es más estable que en el medio acuoso. Si el éter acelerara la descomposición, no sería posible observar el color azul-violeta característico del ensayo." },
+          { text: "Disminuir el pH de la solución para favorecer la reducción del cromo", correct: false, explanation: "El éter no interviene en el pH del medio, esa función la tiene el ácido acético en esta reacción. Además, favorecer la reducción del cromo iría en contra del objetivo del ensayo, que busca justamente observar el compuesto de Cr(V) antes de que se reduzca." }
+        ]
+      },
+      {
+        question: "¿Cuál de las siguientes formas de preparar la mezcla frigorífica permite obtener una buena relación entre precisión y eficiencia?",
+        options: [
+          { text: "Pesar tanto la cantidad de hielo como la cantidad de sal a utilizar, ya que una pequeña diferencia en la masa implica un cambio significativo en la temperatura.", correct: false,
+            explanation: "Pesar el hielo es innecesario e impráctico, ya que se derrite durante el proceso y la medida obtenida no es representativa (y también puede mojar la balanza, dañándola). Además, la proporción exacta de sal tampoco es necesaria para obtener una mezcla frigorífica eficaz." },
+          { text: "Medir aproximadamente la cantidad de hielo con un vaso de Bohemia o de descartes y pesar la cantidad de sal necesaria, ya que la proporción exacta de sal es importante para alcanzar la temperatura mínima de la mezcla frigorífica.", correct: false,
+            explanation: "Si bien medir el hielo aproximadamente es correcto, la proporción exacta de sal no es fundamental para que la mezcla alcance una temperatura suficientemente baja, por lo que pesarla es un paso innecesario." },
+          { text: "Medir aproximadamente la sal y el hielo con un vaso de Bohemia o de descartes, ya que una medida aproximada de ambos componentes es suficientemente precisa para preparar una mezcla frigorífica eficaz, sin necesidad de pasos adicionales como el pesado.", correct: true, points: 1,
+            explanation: "Medir ambos componentes aproximadamente es suficientemente preciso para preparar la mezcla frigorífica, ya que no se requiere una proporción exacta de sal e hielo para que la mezcla alcance una temperatura suficientemente baja." },
+          { text: "Pesar la cantidad de hielo necesaria y medir aproximadamente la sal con un vaso de Bohemia, ya que el hielo debe pesarse con precisión para garantizar que la mezcla alcance la temperatura deseada.", correct: false,
+            explanation: "Pesar el hielo es innecesario e impráctico. Una medida aproximada de ambos componentes es suficiente." }
+        ]
+      },
+      {
+        question: "En la práctica realizada, es indispensable usar un termómetro para controlar la temperatura del baño de hielo-sal.",
+        options: [
+          { text: "Verdadero", correct: false,
+            explanation: "Considerar que el termómetro es indispensable sería incorrecto, ya que se puede estimar que el baño está suficientemente frío observando que aún queda hielo sin derretirse por completo, sin necesidad de medir la temperatura exacta." },
+          { text: "Falso", correct: true,
+            explanation: "Si bien el termómetro permite controlar la temperatura con precisión, no es indispensable: se puede considerar que el baño está suficientemente frío observando la presencia de hielo sin derretirse por completo, sin necesidad de medir la temperatura exacta." }
+        ]
+      },
+      {
+        question: "¿Qué se debe hacer cuando el baño de hielo-sal está muy líquido?",
+        options: [
+          { text: "Descartar el líquido formado y agregar más hielo y sal", correct: true, points: 1,
+            explanation: "Descartar el líquido es necesario porque diluye la mezcla y reduce su capacidad de enfriamiento. Agregar hielo y sal es óptimo ya que mantiene la proporción necesaria para el baño." },
+          { text: "Descartar el líquido formado y agregar más hielo", correct: true, points: 0.5,
+            explanation: "Descartar el líquido es necesario porque diluye la mezcla y reduce su capacidad de enfriamiento. Reponer solo con hielo es suficiente, pero no queda exactamente la proporción de hielo y sal requerida." },
+          { text: "Descartar el líquido formado y agregar más sal", correct: false,
+            explanation: "Agregar más sal sin reponer hielo no mejora el enfriamiento, ya que la sal precisa disolverse en el hielo para generar la mezcla frigorífica." },
+          { text: "No retirar el líquido formado y agregar más hielo", correct: false,
+            explanation: "No retirar el líquido diluye la mezcla aunque se agregue más hielo, reduciendo su eficacia." },
+          { text: "No retirar el líquido formado y agregar más sal", correct: false,
+            explanation: "Agregar más sal sin descartar el líquido formado hace que esta se disuelva en el agua y no en el hielo, que es lo necesario para generar la mezcla frigorífica." },
+          { text: "No retirar el líquido formado y agregar más hielo y sal", correct: false,
+            explanation: "No retirar el líquido y agregar hielo y sal mantiene una mezcla diluida y menos eficiente." }
+        ]
+      },
+      {
+        question: "Indicá, para cada uno de los siguientes factores, qué condición favorece la descomposición del H₂O₂ durante la síntesis del K₃[Cr(O₂)₄]:",
+        subquestions: [
+          {
+            prompt: "i) Temperatura",
+            options: [
+              { text: "Alta", correct: true,
+                explanation: "Un aumento de la temperatura le aporta energía al sistema, acelerando la descomposición del H₂O₂, que es un proceso favorecido cinéticamente por el calor." },
+              { text: "Baja", correct: false,
+                explanation: "La descomposición del H₂O₂ se enlentece a bajas temperaturas, ya que hay menos energía disponible para que la reacción avance. Por eso, en la síntesis se suele trabajar en frío para preservarlo." }
+            ]
+          },
+          {
+            prompt: "ii) Medio",
+            options: [
+              { text: "Alcalino", correct: true,
+                explanation: "El medio alcalino favorece mucho la descomposición del H₂O₂ hacia agua y oxígeno." },
+              { text: "Neutro", correct: false,
+                explanation: "En medio neutro, el H₂O₂ se descompone más lentamente que en medio alcalino, por lo que no representa la condición que más favorece su descomposición." },
+              { text: "Ácido", correct: false,
+                explanation: "El H₂O₂ es más estable en medio ácido, por lo que es la condición menos favorable para que se descomponga." }
+            ]
+          },
+          {
+            prompt: "iii) Metales de transición",
+            options: [
+              { text: "Presencia de metales de transición", correct: true,
+                explanation: "Los metales de transición (como Cr) actúan como catalizadores de la descomposición del H₂O₂, acelerando notablemente la reacción incluso en pequeñas cantidades." },
+              { text: "Ausencia de metales de transición", correct: false,
+                explanation: "Si no hay metales de transición, la descomposición del H₂O₂ ocurre más lentamente, por lo que la ausencia de estos no favorece, sino que retrasa el proceso." }
+            ]
+          }
+        ]
+      }
+    ]
+  },
+  P6: {
+    title: "P6 · Trisoxalatoferrato(III) de potasio",
+    subtitle: "K₃[Fe(ox)₃]",
+    questions: [
+      {
+        question: "¿Durante el proceso de recristalización, por qué se evita enfriar bruscamente el recipiente que contiene la solución del sólido a recristalizar?",
+        options: [
+          { text: "El enfriamiento rápido puede romper el recipiente debido al choque térmico", correct: false, explanation: "Romper el recipiente podría ser un riesgo, pero no es la razón principal por la que se evita enfriar en este contexto. El motivo central es evitar que se formen cristales pequeños e impuros, que es el problema que afecta directamente la calidad del producto recristalizado." },
+          { text: "Se favorece la formación de cristales muy pequeños, con impurezas ocluidas", correct: true,
+            explanation: "Un enfriamiento brusco hace que la cristalización ocurra muy rápido, favoreciendo la formación de muchos cristales pequeños que pueden atrapar (ocluir) impurezas y solvente, en lugar de cristales grandes y puros, que se forman con un enfriamiento lento y controlado." },
+          { text: "Pueden coprecipitar otras sales presentes en la solución", correct: false, explanation: "Este fenómeno puede ocurrir, pero no es específico del enfriamiento rápido: la coprecipitación de otras sales depende de su propia solubilidad y puede darse incluso con un enfriamiento controlado. No explica por qué el enfriamiento brusco en particular es problemático. La razón específica es la formación de cristales pequeños que ocluyen impurezas, no la presencia de otras sales en sí." },
+          { text: "Aumenta la solubilidad del compuesto, evitando que cristalice", correct: false, explanation: "Al enfriar bruscamente disminuye la solubilidad de forma abrupta, lo que dispara la nucleación rápida (y por eso se forman muchos cristales chicos), no evita la cristalización." }
+        ]
+      },
+      {
+        question: "¿Qué puedes hacer si luego de dejar reposar un rato, no recristaliza el K₃[Fe(ox)₃]·3H₂O?",
+        multiSelect: true,
+        maxPoints: 1,
+        options: [
+          { text: "Raspar las paredes del vaso con una varilla de vidrio", correct: true, points: 0.34,
+            explanation: "Cualquiera de estas acciones puede inducir la cristalización: raspar las paredes genera puntos de nucleación, pasar por un baño de agua y luego de hielo favorece una cristalización gradual, y sembrar un cristal puro aporta un núcleo sobre el cual se pueden depositar otras partículas y generar cristales." },
+          { text: "Colocar en un baño de agua y luego en un baño de hielo", correct: true, points: 0.33,
+            explanation: "Cualquiera de estas acciones puede inducir la cristalización: raspar las paredes genera puntos de nucleación, pasar por un baño de agua y luego de hielo favorece una cristalización gradual, y sembrar un cristal puro aporta un núcleo sobre el cual se pueden depositar otras partículas y generar cristales." },
+          { text: "Sembrar un cristal de K₃[Fe(ox)₃]·3H₂O puro", correct: true, points: 0.33,
+            explanation: "Cualquiera de estas acciones puede inducir la cristalización: raspar las paredes genera puntos de nucleación, pasar por un baño de agua y luego de hielo favorece una cristalización gradual, y sembrar un cristal puro aporta un núcleo sobre el cual se pueden depositar otras partículas y generar cristales." },
+          { text: "Todas son correctas", correct: true, points: 1,
+            explanation: "Cualquiera de estas acciones puede inducir la cristalización: raspar las paredes genera puntos de nucleación, pasar por un baño de agua y luego de hielo favorece una cristalización gradual, y sembrar un cristal puro aporta un núcleo sobre el cual se pueden depositar otras partículas y generar cristales." }
+        ]
+      },
+      {
+        question: "La velocidad de agregado de la solución de ácido oxálico a la solución de sal de Mohr no influye de manera significativa en la calidad del precipitado obtenido si luego se realiza un envejecimiento porque:",
+        options: [
+          { text: "El envejecimiento descompone el precipitado y lo vuelve a formar de cero, eliminando cualquier impureza", correct: false, explanation: "El envejecimiento no 'reinicia' el precipitado desde cero, sino que redisuelve selectivamente los cristales pequeños para que se depositen sobre los grandes (maduración de Ostwald). Además, esto mejora la pureza y el tamaño de partícula, pero no elimina 'cualquier impureza' de forma total." },
+          { text: "Los cristales más pequeños se redisuelven para luego depositarse sobre los cristales más grandes, aumentando el tamaño de partícula del precipitado", correct: true,
+            explanation: "Durante el envejecimiento, los cristales pequeños (más solubles por su mayor relación superficie/volumen) tienden a redisolverse y depositarse sobre los cristales más grandes (maduración de Ostwald), homogeneizando el tamaño de partícula sin importar cómo se formó inicialmente el precipitado." },
+          { text: "El envejecimiento permite que el solvente se evapore lentamente, concentrando el precipitado y volviéndolo más puro", correct: false, explanation: "El envejecimiento no depende de la evaporación del solvente, sino de la diferencia de solubilidad entre cristales pequeños y grandes en la solución. El aumento de pureza no se da por concentrar la solución, sino por la reorganización de los cristales mediante disolución-recristalización." },
+          { text: "El precipitado se transforma completamente en un compuesto diferente, por lo que las condiciones iniciales dejan de ser importantes", correct: false, explanation: "Durante el envejecimiento no cambia la identidad química del compuesto, solo su tamaño y organización cristalina. Sigue siendo el mismo precipitado, solo que con cristales más grandes y homogéneos." }
+        ]
+      },
+      {
+        question: "Si luego de realizar el envejecimiento del oxalato ferroso, se observa que las partículas continúan siendo muy pequeñas, ¿qué deberías hacer en esta situación?",
+        options: [
+          { text: "Separarlo por centrifugación y seguir con el resto de la técnica", correct: false, explanation: "Avanzar con partículas pequeñas implica arrastrar los problemas que el envejecimiento busca evitar: mayor oclusión de impurezas y mayor dificultad para separar el sólido correctamente. Aunque la centrífuga permite la separación, no saca las impurezas que pudieron haber quedado ocluidas." },
+          { text: "Envejecer un rato más", correct: true, explanation: "Si las partículas siguen siendo muy pequeñas, significa que la maduración de Ostwald todavía no se completó: los cristales chicos no tuvieron tiempo suficiente para redisolverse y depositarse sobre los más grandes. Lo correcto es extender el tiempo de envejecimiento, en lugar de avanzar con partículas que luego dificultarían la filtración y arrastrarían más impurezas." },
+          { text: "Realizar todo el procedimiento de nuevo", correct: false, explanation: "No hace falta repetir la precipitación desde cero, alcanza con darle más tiempo al envejecimiento para que el mismo precipitado ya formado termine de madurar." },
+          { text: "Filtrar a vacío y seguir con el resto de la técnica", correct: false, explanation: "Avanzar con partículas pequeñas implica arrastrar los problemas que el envejecimiento busca evitar: mayor oclusión de impurezas y mayor dificultad para separar el sólido correctamente. Si las partículas obtenidas son muy pequeñas, podrían atravesar el papel de filtro, lo que implicaría una pérdida de rendimiento del producto. Además, filtrar no quita las posibles impurezas ocluidas." }
+        ]
+      },
+      {
+        question: "¿Qué precaución(es) tienes que tener al momento de realizar una filtración en caliente? Selecciona una o más opciones:",
+        multiSelect: true,
+        maxPoints: 1,
+        options: [
+          { text: "El matraz del sistema de filtrado debe contener una pequeña cantidad de solvente", correct: true, points: 0.33, explanation: "Si el matraz se calienta en seco sobre la plancha, el calor se concentra sobre el vidrio sin nada que lo distribuya, lo que puede generar un calentamiento desparejo y aumentar el riesgo de que se rompa. Tener un poco de solvente ayuda a distribuir el calor de forma más uniforme sobre las paredes del matraz, protegiéndolo del choque térmico y manteniendo el sistema a la temperatura adecuada para la filtración." },
+          { text: "Usar algodón y nunca papel de filtro", correct: false, explanation: "En una filtración en caliente se sigue usando papel de filtro, y también se puede usar algodón en algunos casos. Lo que no se puede hacer es usar ambos al mismo tiempo." },
+          { text: "Tener el sistema de filtrado (embudo y matraz) lo suficientemente caliente", correct: true, points: 0.34, explanation: "Esta es la precaución más importante: si el sistema está frío, la solución se enfría al pasar por él y el sólido puede cristalizar antes de completarse la filtración, tapando el embudo o quedando retenido junto con las impurezas que se querían eliminar." },
+          { text: "Usar un vaso de plástico para el solvente", correct: false, explanation: "No es una precaución relevante ni recomendable: al trabajar con solventes calientes, se necesita material resistente al calor (vidrio), ya que el plástico podría deformarse o fundirse." },
+          { text: "Colocar un pedazo de papel entre el embudo y el matraz de filtración", correct: true, points: 0.33, explanation: "Evita que se forme vacío, lo que permite que la solución a filtrar pase por el embudo." }
+        ]
+      },
+      {
+        variants: [
+          {
+            question: "¿Consideras que el siguiente sistema de filtración en caliente se encuentra listo para ser usado? (revisá que no falte ningún elemento del sistema y que las cantidades de líquido sean adecuadas)",
+            image: "imagenes/p6_filtracion_agua.jpg",
+            options: [
+              { text: "Sí", correct: false,
+                explanation: "Hay mucha cantidad de agua en el matraz de filtrado, por lo que el sistema no se encuentra en condiciones para iniciar la filtración en caliente. Si se filtra la solución saturada del producto a recristalizar con esa cantidad de agua en el matraz, se perderá la saturación de la solución y probablemente no cristalizará producto." },
+              { text: "No", correct: true,
+                explanation: "Hay mucha cantidad de agua en el matraz de filtrado, por lo que el sistema no se encuentra en condiciones para iniciar la filtración en caliente." }
+            ]
+          },
+          {
+            question: "¿Consideras que el siguiente sistema de filtración en caliente se encuentra listo para ser usado? (revisá que no falte ningún elemento del sistema y que las cantidades de líquido sean adecuadas)",
+            image: "imagenes/p6_filtracion_sinpapel.jpg",
+            options: [
+              { text: "Sí", correct: false,
+                explanation: "El sistema no tiene papel de filtro en el embudo, por lo que no está pronto para comenzar la filtración. Como el objetivo de la filtración es remover impurezas no solubles de una solución, filtrar sin papel sería lo mismo que no filtrar directamente." },
+              { text: "No", correct: true,
+                explanation: "El sistema no tiene papel de filtro en el embudo, por lo que no está pronto para comenzar la filtración." }
+            ]
+          }
+        ]
+      },
+      {
+        question: "¿Cuál puede ser una consecuencia de agregar una cantidad insuficiente de etanol durante la obtención de K₃[Fe(ox)₃]·3H₂O por cambio de disolvente?",
+        options: [
+          { text: "El complejo precipita demasiado rápido y queda impurificado", correct: false, explanation: "Es lo opuesto a lo que ocurre: agregar poco etanol mantiene alta la solubilidad del complejo en la mezcla, por lo que en todo caso precipita más lento o de forma incompleta, no rápido." },
+          { text: "El producto puede no precipitar completamente, disminuyendo el rendimiento", correct: true,
+            explanation: "Si se agrega poco etanol, la solubilidad del complejo en la mezcla agua-etanol sigue siendo relativamente alta, por lo que parte del producto permanece disuelto y no precipita, disminuyendo el rendimiento." },
+          { text: "Se favorece la descomposición fotoquímica del complejo", correct: false, explanation: "La cantidad de etanol agregada no tiene relación con la descomposición fotoquímica del complejo, que depende de la exposición a la luz y no del solvente usado para precipitarlo. Esta opción mezcla dos fenómenos independientes." },
+          { text: "Precipita oxalato de potasio junto con el producto", correct: false, explanation: "Esto no ocurre cuando se agrega una cantidad insuficiente de etanol, sino cuando se agrega un exceso del mismo. Con poco etanol, el problema es que el producto de interés no termina de precipitar, no que arrastre subproductos." }
+        ]
+      }
+    ]
+  }
+};
+
+/* ===================== A partir de acá es la lógica (no hace falta tocarla) ===================== */
+
+let activeSetKey = null;
+let activeQuestions = [];
+let currentOptions = [];
+let selectedIndices = new Set();
+let current = 0;
+let score = 0;
+let maxScore = 0;
+const letters = ["A","B","C","D","E","F"];
+
+const card = document.getElementById("card");
+const progressTrack = document.getElementById("progressTrack");
+const mainTitle = document.getElementById("mainTitle");
+
+function renderIdScreen() {
+  mainTitle.textContent = "Antes de empezar";
+  progressTrack.innerHTML = "";
+  card.innerHTML = `
+    <div class="menu-intro">Estos datos se usan solo para identificar tu entrega ante los profesores.</div>
+    <div class="id-field">
+      <label>Nombre y apellido</label>
+      <input type="text" id="nameInput" placeholder="Ej: Juan Pérez" value="${studentName}">
+    </div>
+    <div class="id-field">
+      <label>Cédula</label>
+      <input type="text" id="cedulaInput" placeholder="Ej: 12345678" value="${studentCedula}">
+    </div>
+    <div class="id-field">
+      <label>Grupo</label>
+      <select id="groupInput">
+        <option value="" disabled ${!studentGroup ? "selected" : ""}>Seleccioná tu grupo</option>
+        ${Array.from({length: 10}, (_, i) => `G${i+1}`).map(g =>
+          `<option value="${g}" ${studentGroup === g ? "selected" : ""}>${g}</option>`
+        ).join("")}
+      </select>
+    </div>
+    <div class="id-error" id="idError">Completá todos los campos para continuar.</div>
+    <button class="continue-btn" id="continueBtn">Continuar</button>
+  `;
+  document.getElementById("continueBtn").addEventListener("click", () => {
+    const name = document.getElementById("nameInput").value.trim();
+    const cedulaRaw = document.getElementById("cedulaInput").value.trim();
+    const cedula = cedulaRaw.replace(/[^0-9]/g, ""); // deja solo dígitos: quita puntos, guiones, espacios
+    const group = document.getElementById("groupInput").value;
+    if (!name || !cedula || !group) {
+      document.getElementById("idError").classList.add("visible");
+      return;
+    }
+    studentName = name;
+    studentCedula = cedula;
+    studentGroup = group;
+    renderMenu();
+  });
+}
+
+function renderMenu() {
+  activeSetKey = null;
+  mainTitle.textContent = "Elige una práctica";
+  progressTrack.innerHTML = "";
+  card.innerHTML = `
+    <button class="back-link" id="changeIdLink">&larr; cambiar nombre / cédula / grupo</button>
+    <div class="menu-intro">Selecciona el cuestionario que quieres realizar.</div>
+    <div class="menu-grid" id="menuGrid"></div>
+  `;
+  document.getElementById("changeIdLink").addEventListener("click", renderIdScreen);
+  const grid = document.getElementById("menuGrid");
+  Object.keys(quizSets).forEach(key => {
+    const set = quizSets[key];
+    const btn = document.createElement("button");
+    btn.className = "menu-item";
+    btn.innerHTML = `
+      <div class="tag">${key}</div>
+      <div class="name">${set.title.replace(key + " · ", "")}</div>
+      <div class="sub">${set.subtitle}</div>
+    `;
+    btn.addEventListener("click", () => startSet(key));
+    grid.appendChild(btn);
+  });
+}
+
+async function sendResult(practiceKey, scoreText) {
+  const payload = {
+    nombre: studentName,
+    cedula: studentCedula,
+    grupo: studentGroup,
+    practica: practiceKey,
+    puntaje: scoreText
+  };
+  // mode "no-cors" evita el chequeo de permisos cruzados del navegador;
+  // a cambio, no podemos leer la respuesta — por eso se asume éxito si
+  // el fetch no tira un error de red.
+  await fetch(APPS_SCRIPT_URL, {
+    method: "POST",
+    mode: "no-cors",
+    body: JSON.stringify(payload)
+  });
+}
+
+function shuffleArray(arr) {
+  const a = arr.slice();
+  for (let i = a.length - 1; i > 0; i--) {
+    const j = Math.floor(Math.random() * (i + 1));
+    [a[i], a[j]] = [a[j], a[i]];
+  }
+  return a;
+}
+
+function resolveVariants(rawQuestions) {
+  // Si una entrada tiene "variants" (varias versiones de la misma pregunta,
+  // ej. "original" y "alternativa"), se elige UNA al azar por intento, en
+  // vez de mostrar todas.
+  return rawQuestions.map(q => {
+    if (q.variants) {
+      return q.variants[Math.floor(Math.random() * q.variants.length)];
+    }
+    return q;
+  });
+}
+
+function startSet(key) {
+  activeSetKey = key;
+  current = 0;
+  score = 0;
+  maxScore = 0;
+  const set = quizSets[key];
+  const n = set.questionsPerAttempt;
+  const resolvedQuestions = resolveVariants(set.questions);
+
+  if (typeof n === "number" && n < resolvedQuestions.length) {
+    const fixedQs = resolvedQuestions.filter(q => q.fixed);
+    const poolQs = resolvedQuestions.filter(q => !q.fixed);
+    const remaining = Math.max(n - fixedQs.length, 0);
+    const randomPart = shuffleArray(poolQs).slice(0, remaining);
+    activeQuestions = shuffleArray(fixedQs.concat(randomPart));
+  } else {
+    activeQuestions = shuffleArray(resolvedQuestions);
+  }
+
+  mainTitle.textContent = set.title;
+  renderQuestion();
+}
+
+function getOptionPoints(opt) {
+  if (typeof opt.points === "number") return opt.points;
+  return opt.correct ? 1 : 0;
+}
+
+function getQuestionMaxPoints(q) {
+  return Math.max(...q.options.map(getOptionPoints));
+}
+
+function resolveMaxPoints(q) {
+  // Para preguntas de selección múltiple con "maxPoints" definido, se usa
+  // ese valor como tope (así elegir varias opciones correctas a la vez no
+  // suma más allá del máximo real de la pregunta).
+  if (typeof q.maxPoints === "number") return q.maxPoints;
+  return getQuestionMaxPoints(q);
+}
+
+function formatNum(n) {
+  if (Number.isInteger(n)) return n.toString();
+  return parseFloat(n.toFixed(2)).toString();
+}
+
+function renderProgress() {
+  const total = activeQuestions.length;
+  progressTrack.innerHTML = "";
+  for (let i = 0; i < total; i++) {
+    const d = document.createElement("div");
+    d.className = "drop" + (i < current ? " filled" : "") + (i === current ? " current" : "");
+    progressTrack.appendChild(d);
+  }
+}
+
+function renderQuestion() {
+  const q = activeQuestions[current];
+
+  if (q.subquestions) {
+    renderSubquestionsCard(q);
+    return;
+  }
+
+  currentOptions = shuffleArray(q.options);
+  selectedIndices = new Set();
+  const tagNum = String(current + 1).padStart(2, "0");
+
+  const imageHtml = q.image
+    ? `<img src="${q.image}" alt="Imagen de la pregunta" class="question-image">`
+    : "";
+  const subitemsHtml = q.subitems
+    ? `<ol class="subitems">${q.subitems.map(s => `<li>${s}</li>`).join("")}</ol>`
+    : "";
+  const confirmHtml = q.multiSelect
+    ? `<button class="confirm-btn" id="confirmBtn" disabled>Confirmar respuesta</button>`
+    : "";
+
+  card.innerHTML = `
+    <button class="back-link" id="backLink">&larr; volver al menú</button>
+    <div class="sample-tag">MUESTRA Nº ${tagNum}</div>
+    <div class="question-text">${q.question}</div>
+    ${imageHtml}
+    ${subitemsHtml}
+    <div class="options" id="optionsWrap"></div>
+    ${confirmHtml}
+    <div class="footer-row">
+      <div class="status-note" id="statusNote">${q.multiSelect ? "Marcá una o más opciones y confirmá" : "Seleccioná una opción"}</div>
+      <button class="next-btn" id="nextBtn">
+        ${current === activeQuestions.length - 1 ? "Ver resultado" : "Siguiente pregunta"}
+      </button>
+    </div>
+  `;
+
+  const wrap = document.getElementById("optionsWrap");
+  currentOptions.forEach((opt, i) => {
+    const btn = document.createElement("button");
+    btn.className = "option";
+    const optionImageHtml = opt.image
+      ? `<img src="${opt.image}" alt="${opt.text || "Imagen de la opción"}" class="option-image">`
+      : "";
+    btn.innerHTML = `
+      <span class="letter">${letters[i]}</span>
+      <span class="option-body">
+        ${optionImageHtml}
+        <span class="option-text">${opt.text}</span>
+        <div class="explanation">${opt.explanation}</div>
+      </span>
+    `;
+    if (q.multiSelect) {
+      btn.addEventListener("click", () => toggleOption(i));
+    } else {
+      btn.addEventListener("click", () => selectOption(i));
+    }
+    wrap.appendChild(btn);
+  });
+
+  if (q.multiSelect) {
+    document.getElementById("confirmBtn").addEventListener("click", confirmMultiSelect);
+  }
+  document.getElementById("nextBtn").addEventListener("click", goNext);
+  document.getElementById("backLink").addEventListener("click", renderMenu);
+  renderProgress();
+}
+
+function toggleOption(index) {
+  const optionButtons = document.querySelectorAll("#optionsWrap .option");
+  if (optionButtons[0].classList.contains("locked")) return;
+
+  const btn = optionButtons[index];
+  if (selectedIndices.has(index)) {
+    selectedIndices.delete(index);
+    btn.classList.remove("selected");
+  } else {
+    selectedIndices.add(index);
+    btn.classList.add("selected");
+  }
+  document.getElementById("confirmBtn").disabled = selectedIndices.size === 0;
+}
+
+function confirmMultiSelect() {
+  const q = activeQuestions[current];
+  const optionButtons = document.querySelectorAll("#optionsWrap .option");
+  const maxP = resolveMaxPoints(q);
+  let earned = 0;
+
+  optionButtons.forEach((btn, i) => {
+    btn.classList.add("locked");
+    btn.classList.remove("selected");
+    const opt = currentOptions[i];
+    const isSelected = selectedIndices.has(i);
+    const letterEl = btn.querySelector(".letter");
+
+    if (isSelected && opt.correct) {
+      btn.classList.add("correct-answer");
+      letterEl.textContent = "✓";
+      earned += getOptionPoints(opt);
+    } else if (isSelected && !opt.correct) {
+      btn.classList.add("incorrect-answer");
+      letterEl.textContent = "✗";
+    } else if (!isSelected && opt.correct) {
+      btn.classList.add("missed");
+      letterEl.textContent = "✓";
+    } else {
+      btn.classList.add("dimmed");
+    }
+  });
+
+  earned = Math.min(earned, maxP);
+  score += earned;
+  maxScore += maxP;
+
+  let message;
+  if (earned >= maxP && earned > 0) {
+    message = "¡Correcto! Revisá las explicaciones abajo.";
+  } else if (earned > 0) {
+    message = `Parcialmente correcto (vale ${formatNum(earned)} de ${formatNum(maxP)} puntos) — mirá las explicaciones.`;
+  } else {
+    message = "Ninguna de las marcadas era correcta — mirá las explicaciones abajo.";
+  }
+  document.getElementById("statusNote").textContent = message;
+  document.getElementById("confirmBtn").style.display = "none";
+  document.getElementById("nextBtn").classList.add("visible");
+}
+
+/* =====================================================================
+   PREGUNTAS CON SUBPREGUNTAS (i, ii, iii... en una sola tarjeta)
+===================================================================== */
+let subOptionsShuffled = [];
+let subSelections = [];
+
+function renderSubquestionsCard(q) {
+  subOptionsShuffled = q.subquestions.map(sq => shuffleArray(sq.options));
+  subSelections = q.subquestions.map(sq => sq.multiSelect ? new Set() : null);
+  const tagNum = String(current + 1).padStart(2, "0");
+
+  const imageHtml = q.image
+    ? `<img src="${q.image}" alt="Imagen de la pregunta" class="question-image">`
+    : "";
+  const introHtml = q.question ? `<div class="question-text">${q.question}</div>` : "";
+
+  const blocksHtml = q.subquestions.map((sq, si) => `
+    <div class="subq-block">
+      <div class="subq-prompt">${sq.prompt}</div>
+      <div class="options" id="subOptions${si}"></div>
+      <div class="sub-status" id="subStatus${si}" style="display:none;"></div>
+    </div>
+  `).join("");
+
+  card.innerHTML = `
+    <button class="back-link" id="backLink">&larr; volver al menú</button>
+    <div class="sample-tag">MUESTRA Nº ${tagNum}</div>
+    ${introHtml}
+    ${imageHtml}
+    ${blocksHtml}
+    <button class="confirm-btn" id="confirmAllBtn" disabled>Confirmar respuesta</button>
+    <div class="footer-row">
+      <div class="status-note" id="statusNote"></div>
+      <button class="next-btn" id="nextBtn">
+        ${current === activeQuestions.length - 1 ? "Ver resultado" : "Siguiente pregunta"}
+      </button>
+    </div>
+  `;
+
+  q.subquestions.forEach((sq, si) => {
+    const wrap = document.getElementById(`subOptions${si}`);
+    subOptionsShuffled[si].forEach((opt, i) => {
+      const btn = document.createElement("button");
+      btn.className = "option";
+      const optionImageHtml = opt.image
+        ? `<img src="${opt.image}" alt="${opt.text || "Imagen de la opción"}" class="option-image">`
+        : "";
+      btn.innerHTML = `
+        <span class="letter">${letters[i]}</span>
+        <span class="option-body">
+          ${optionImageHtml}
+          <span class="option-text">${opt.text}</span>
+          <div class="explanation">${opt.explanation}</div>
+        </span>
+      `;
+      btn.addEventListener("click", () => toggleSubOption(si, i, !!sq.multiSelect));
+      wrap.appendChild(btn);
+    });
+  });
+
+  document.getElementById("confirmAllBtn").addEventListener("click", () => confirmSubquestions(q));
+  document.getElementById("nextBtn").addEventListener("click", goNext);
+  document.getElementById("backLink").addEventListener("click", renderMenu);
+  renderProgress();
+}
+
+function toggleSubOption(si, i, isMulti) {
+  const wrap = document.getElementById(`subOptions${si}`);
+  if (wrap.classList.contains("locked")) return;
+  const btns = wrap.querySelectorAll(".option");
+
+  if (isMulti) {
+    if (subSelections[si].has(i)) {
+      subSelections[si].delete(i);
+      btns[i].classList.remove("selected");
+    } else {
+      subSelections[si].add(i);
+      btns[i].classList.add("selected");
+    }
+  } else {
+    subSelections[si] = i;
+    btns.forEach((b, bi) => b.classList.toggle("selected", bi === i));
+  }
+  updateConfirmAllState();
+}
+
+function updateConfirmAllState() {
+  const allAnswered = subSelections.every(sel =>
+    sel instanceof Set ? sel.size > 0 : sel !== null
+  );
+  document.getElementById("confirmAllBtn").disabled = !allAnswered;
+}
+
+function confirmSubquestions(q) {
+  let totalEarned = 0;
+  let totalMax = 0;
+
+  q.subquestions.forEach((sq, si) => {
+    const wrap = document.getElementById(`subOptions${si}`);
+    wrap.classList.add("locked");
+    const btns = wrap.querySelectorAll(".option");
+    const maxP = resolveMaxPoints(sq);
+    const sel = subSelections[si];
+    const isMulti = !!sq.multiSelect;
+    let earned = 0;
+
+    btns.forEach((btn, i) => {
+      btn.classList.add("locked");
+      const opt = subOptionsShuffled[si][i];
+      const letterEl = btn.querySelector(".letter");
+      const isSelected = isMulti ? sel.has(i) : sel === i;
+
+      if (isSelected && opt.correct) {
+        btn.classList.add("correct-answer");
+        letterEl.textContent = "✓";
+        earned += getOptionPoints(opt);
+      } else if (isSelected && !opt.correct) {
+        btn.classList.add("incorrect-answer");
+        letterEl.textContent = "✗";
+      } else if (!isSelected && opt.correct) {
+        btn.classList.add("missed");
+        letterEl.textContent = "✓";
+      } else {
+        btn.classList.add("dimmed");
+      }
+    });
+
+    earned = Math.min(earned, maxP);
+    totalEarned += earned;
+    totalMax += maxP;
+
+    const statusEl = document.getElementById(`subStatus${si}`);
+    statusEl.style.display = "block";
+    if (earned >= maxP && earned > 0) {
+      statusEl.textContent = "¡Correcto!";
+    } else if (earned > 0) {
+      statusEl.textContent = `Parcialmente correcto (${formatNum(earned)} de ${formatNum(maxP)} puntos)`;
+    } else {
+      statusEl.textContent = "Incorrecto — revisá las explicaciones.";
+    }
+  });
+
+  score += totalEarned;
+  maxScore += totalMax;
+
+  document.getElementById("statusNote").textContent =
+    `Puntaje de esta pregunta: ${formatNum(totalEarned)} / ${formatNum(totalMax)}`;
+  document.getElementById("confirmAllBtn").style.display = "none";
+  document.getElementById("nextBtn").classList.add("visible");
+}
+
+function selectOption(index) {
+  const q = activeQuestions[current];
+  const optionButtons = document.querySelectorAll("#optionsWrap .option");
+  if (optionButtons[0].classList.contains("locked")) return;
+
+  const chosenOpt = currentOptions[index];
+  const earned = getOptionPoints(chosenOpt);
+  const maxP = resolveMaxPoints(q);
+
+  optionButtons.forEach((btn, i) => {
+    btn.classList.add("locked");
+    const isCorrect = currentOptions[i].correct;
+    const letterEl = btn.querySelector(".letter");
+    if (isCorrect) {
+      btn.classList.add("correct-answer");
+      letterEl.textContent = "✓";
+    } else if (i === index) {
+      btn.classList.add("incorrect-answer");
+      letterEl.textContent = "✗";
+    } else {
+      btn.classList.add("dimmed");
+    }
+  });
+
+  score += earned;
+  maxScore += maxP;
+
+  let message;
+  if (earned >= maxP && earned > 0) {
+    message = "¡Correcto! Revisá las explicaciones abajo.";
+  } else if (earned > 0) {
+    message = `Parcialmente correcto (vale ${formatNum(earned)} de ${formatNum(maxP)} puntos) — mirá las explicaciones.`;
+  } else {
+    message = "No era esa — mirá las explicaciones para entender por qué.";
+  }
+  document.getElementById("statusNote").textContent = message;
+  document.getElementById("nextBtn").classList.add("visible");
+}
+
+function goNext() {
+  if (current < activeQuestions.length - 1) {
+    current++;
+    renderQuestion();
+  } else {
+    renderResult();
+  }
+}
+
+function renderResult() {
+  current = activeQuestions.length;
+  renderProgress();
+  const pct = maxScore > 0 ? Math.round((score / maxScore) * 100) : 0;
+  const scoreText = `${formatNum(score)}/${formatNum(maxScore)}`;
+  card.innerHTML = `
+    <div class="result-screen">
+      <div class="status-note" style="margin-bottom:2px;">RESULTADO · ${activeSetKey}</div>
+      <div class="big">${formatNum(score)} / ${formatNum(maxScore)}</div>
+      <p>${pct}% de respuestas correctas en esta ronda.</p>
+      <button class="send-btn" id="sendBtn">Enviar resultado</button>
+      <div class="sent-note" id="sentNote"></div>
+      <div class="result-actions" style="margin-top:16px;">
+        <button class="menu-btn" id="menuBtn">Volver al menú</button>
+      </div>
+    </div>
+  `;
+  document.getElementById("sendBtn").addEventListener("click", async (e) => {
+    const btn = e.target;
+    btn.disabled = true;
+    btn.textContent = "Enviando...";
+    document.getElementById("sentNote").textContent = "";
+    try {
+      await sendResult(activeSetKey, scoreText);
+      btn.textContent = "Enviado ✓";
+      btn.classList.add("sent");
+      document.getElementById("sentNote").textContent = "Resultado enviado.";
+    } catch (err) {
+      btn.disabled = false;
+      btn.textContent = "Enviar resultado";
+      document.getElementById("sentNote").textContent = "No se pudo enviar (revisá tu conexión) — probá de nuevo.";
+    }
+  });
+  document.getElementById("menuBtn").addEventListener("click", renderMenu);
+}
+
+renderIdScreen();
+</script>
+
+</body>
+</html>
