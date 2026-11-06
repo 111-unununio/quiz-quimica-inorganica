@@ -727,20 +727,20 @@ const quizSets = {
       {
         question: "¿Cuál de las siguientes imágenes presenta un tapón correctamente ajustado a su matraz?",
         options: [
-          { text: "", image: "imagenes/p2_tapon_a.png", correct: true, points: 1,
+          { text: "", alt: "Matraz Erlenmeyer con tapón", image: "imagenes/p2_tapon_a.png", correct: true, points: 1,
             explanation: "El tapón se encuentra correctamente ajustado, no permite pérdidas de gases." },
-          { text: "", image: "imagenes/p2_tapon_b.png", correct: false,
+          { text: "", alt: "Matraz Erlenmeyer con tapón", image: "imagenes/p2_tapon_b.png", correct: false,
             explanation: "El tapón no se encuentra lo suficientemente ajustado, puede haber pérdida de gases." },
-          { text: "", image: "imagenes/p2_tapon_c.png", correct: true, points: 0.5,
+          { text: "", alt: "Matraz Erlenmeyer con tapón", image: "imagenes/p2_tapon_c.png", correct: true, points: 0.5,
             explanation: "Este ajuste para el tapón previene que haya pérdidas de gases, pero también será difícil de retirar una vez finalizada la síntesis." }
         ]
       },
       {
         question: "¿Cómo tiene que encontrarse el tapón del balón que contiene el HCl durante el empleo de la bola de decantación para verter?",
         options: [
-          { text: "", image: "imagenes/p2_bola_a.png", correct: false, explanation: "Si el balón está tapado, no entra aire para reemplazar el líquido que sale, lo que genera una diferencia de presión que frena o impide el goteo." },
-          { text: "", image: "imagenes/p2_bola_b.png", correct: true, explanation: "Colocar el tapón de esta forma permite la entrada de aire al balón, que reemplaza al líquido que sale al gotear (la presión dentro del balón es igual a la atmosférica). Además, al no destapar completamente el balón, se minimizan los vapores del HCl que salen al ambiente, minimizando el riesgo para quienes se encuentran en el laboratorio." },
-          { text: "", image: "imagenes/p2_bola_c.png", correct: false, explanation: "Al retirar completamente el tapón, los vapores del HCl salen de la bola y permanecen en el ambiente, lo que representa un riesgo para quienes están en el laboratorio." }
+          { text: "", alt: "Bola de decantación", image: "imagenes/p2_bola_a.png", correct: false, explanation: "Si el balón está tapado, no entra aire para reemplazar el líquido que sale, lo que genera una diferencia de presión que frena o impide el goteo." },
+          { text: "", alt: "Bola de decantación", image: "imagenes/p2_bola_b.png", correct: true, explanation: "Colocar el tapón de esta forma permite la entrada de aire al balón, que reemplaza al líquido que sale al gotear (la presión dentro del balón es igual a la atmosférica). Además, al no destapar completamente el balón, se minimizan los vapores del HCl que salen al ambiente, minimizando el riesgo para quienes se encuentran en el laboratorio." },
+          { text: "", alt: "Bola de decantación", image: "imagenes/p2_bola_c.png", correct: false, explanation: "Al retirar completamente el tapón, los vapores del HCl salen de la bola y permanecen en el ambiente, lo que representa un riesgo para quienes están en el laboratorio." }
         ]
       }
     ]
@@ -770,6 +770,8 @@ const quizSets = {
       },
       {
         question: "¿Qué material de vidrio consideras adecuado para disolver un sólido? Selecciona la o las opciones correctas:",
+        multiSelect: true,
+        maxPoints: 1,
         options: [
           { text: "Vaso de Bohemia y varilla", correct: true, points: 0.5,
             explanation: "El vaso de Bohemia y el matraz Erlenmeyer permiten agregar sólido y solvente y agitar con comodidad." },
@@ -782,6 +784,8 @@ const quizSets = {
       },
       {
         question: "¿Cuáles de las siguientes son precauciones que hay que tener al momento de filtrar a vacío?",
+        multiSelect: true,
+        maxPoints: 1,
         options: [
           { text: "Verificar que el vacío esté conectado al momento de agregar líquidos", correct: false, explanation: "El vacío debe estar desconectado al agregar líquidos, para evitar salpicaduras o pérdidas de producto." },
           { text: "Comprobar que el papel de filtro cubra todos los orificios del embudo Büchner y que no se encuentre levantado en los bordes", correct: true, points: 0.5, explanation: "Al comprobar que el papel cubra todos los orificios sin levantarse en los bordes, se evitan pérdidas de sólido." },
@@ -1304,7 +1308,7 @@ function renderQuestion() {
     const btn = document.createElement("button");
     btn.className = "option";
     const optionImageHtml = opt.image
-      ? `<img src="${opt.image}" alt="${opt.text || "Imagen de la opción"}" class="option-image">`
+      ? `<img src="${opt.image}" alt="${opt.alt || opt.text || "Imagen de la opción"}" class="option-image">`
       : "";
     btn.innerHTML = `
       <span class="letter">${letters[i]}</span>
@@ -1435,7 +1439,7 @@ function renderSubquestionsCard(q) {
       const btn = document.createElement("button");
       btn.className = "option";
       const optionImageHtml = opt.image
-        ? `<img src="${opt.image}" alt="${opt.text || "Imagen de la opción"}" class="option-image">`
+        ? `<img src="${opt.image}" alt="${opt.alt || opt.text || "Imagen de la opción"}" class="option-image">`
         : "";
       btn.innerHTML = `
         <span class="letter">${letters[i]}</span>
